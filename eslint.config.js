@@ -20,7 +20,7 @@ export default defineConfig([
       curly: "error",
       eqeqeq: ["error", "always"],
       "no-alert": "error",
-      "no-console": "error",
+      "no-console": "off",
       "no-nested-ternary": "error",
       "no-return-assign": "error",
       "no-shadow": ["error", { hoist: "all" }],

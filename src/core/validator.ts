@@ -1,6 +1,6 @@
-import Field from "./Field";
-import { FieldRule } from "../types/field";
-import { ValidatorOptions } from "../types/validator";
+import Field from "./Field.js";
+import { FieldRule } from "../types/field.js";
+import { ValidatorOptions } from "../types/validator.js";
 
 export default class Validator {
   protected form: HTMLFormElement;
@@ -78,11 +78,8 @@ export default class Validator {
     let isValid = true;
 
     this.fields.forEach((field) => {
-      const result = field.validate();
-
-      if (!result.valid) {
-        isValid = false;
-      }
+      const { valid } = field.validate();
+      if (!valid) isValid = false;
     });
 
     return isValid;

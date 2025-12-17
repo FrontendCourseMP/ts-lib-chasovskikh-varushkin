@@ -1,3 +1,3 @@
-import Validator from './core/Validator';
+import Validator from './core/Validator.js';
 
 export default Validator;

@@ -2,21 +2,126 @@
 <html lang="ru">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ts-val</title>
+    <title>FormGuard Demo</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: #f5f7fb;
+        padding: 40px;
+      }
+
+      form {
+        max-width: 400px;
+        background: #fff;
+        padding: 20px;
+        border-radius: 8px;
+      }
+
+      .field {
+        margin-bottom: 15px;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+      }
+
+      input[type="text"],
+      input[type="email"] {
+        width: 100%;
+        padding: 8px;
+        box-sizing: border-box;
+      }
+
+      .error {
+        color: red;
+        font-size: 13px;
+        margin-top: 4px;
+      }
+
+      button {
+        padding: 10px 15px;
+        cursor: pointer;
+      }
+    </style>
   </head>
   <body>
-    <main>
-      <section>
-        <form novalidate>
-          <label>Имя <input type="text" required></label>
-          <div class="error"></div>
-          <p role="alert" aria-live="assertive"></p>
-          <button type="submit">Отправить</button>
-          <div class="error"></div>
-        </form>
-      </section>
-    </main>
-    <script type="module" src="/src/main.ts"></script>
+    <h1>FormGuard — демонстрация работы</h1>
+
+    <form id="demo-form" novalidate>
+      <!-- TEXT -->
+      <div class="field">
+        <label for="username">Имя пользователя</label>
+        <input
+          type="text"
+          id="username"
+          name="username"
+          required
+          minlength="3"
+        />
+        <div class="error"></div>
+      </div>
+
+      <!-- EMAIL -->
+      <div class="field">
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" required />
+        <div class="error"></div>
+      </div>
+
+      <!-- CHECKBOX GROUP -->
+      <div class="field">
+        <label>Навыки</label>
+
+        <label>
+          <input type="checkbox" name="skills" value="js" />
+          JavaScript
+        </label>
+
+        <label>
+          <input type="checkbox" name="skills" value="css" />
+          CSS
+        </label>
+
+        <label>
+          <input type="checkbox" name="skills" value="html" />
+          HTML
+        </label>
+
+        <div class="error"></div>
+      </div>
+
+      <button type="submit">Отправить</button>
+    </form>
+
+    <script type="module">
+      import FormGuard from "./dist/main.js";
+
+      const form = document.getElementById("demo-form");
+      const validator = new FormGuard(form, { suppressWarnings: true });
+
+      validator.addField("username", [
+        { rule: "required", message: "Введите имя" },
+        { rule: "minLength", value: 3, message: "Минимум 3 символа" },
+      ]);
+
+      validator.addField("email", [
+        { rule: "required", message: "Введите email" },
+        { rule: "email", message: "Некорректный email" },
+      ]);
+
+      validator.addField("skills", [
+        { rule: "required", message: "Выберите хотя бы один навык" },
+      ]);
+
+      form.addEventListener("submit", (e) => {
+        if (!validator.validate()) {
+          e.preventDefault();
+        } else {
+          alert("Форма успешно прошла валидацию!");
+        }
+      });
+    </script>
   </body>
 </html>

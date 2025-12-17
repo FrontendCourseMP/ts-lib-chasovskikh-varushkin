@@ -1,4 +1,4 @@
-import { FieldRule } from '../types/field';
+import { FieldRule } from '../types/field.js';
 
 export type RuleResult = string | null;
 

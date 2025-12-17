@@ -1,5 +1,5 @@
-import { rulesMap } from "./rules";
-import { FieldRule } from "../types/field";
+import { rulesMap } from "./rules.js";
+import { FieldRule } from "../types/field.js";
 
 export default class Field {
   public element: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
@@ -41,7 +41,7 @@ export default class Field {
       const value = this.getValue() as string[];
 
       if (this.rules.some((r) => r.rule === "required") && value.length === 0) {
-        errors.push("Please select at least one option");
+        errors.push("Выберите хотя бы один навык");
       }
     } else {
       if (!this.element.checkValidity()) {
@@ -94,7 +94,8 @@ export default class Field {
 
   private getErrorContainer(): HTMLElement | null {
     if (this.isCheckboxGroup()) {
-      return this.checkboxes![0].parentElement?.querySelector(".error") || null;
+      const fieldWrapper = this.checkboxes![0].closest(".field");
+      return fieldWrapper?.querySelector(".error") || null;
     }
 
     return this.element.parentElement?.querySelector(".error") || null;

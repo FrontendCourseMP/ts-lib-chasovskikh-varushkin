@@ -1,26 +1,31 @@
+
+````md
 # FormGuard
 
-FormGuard — лёгкая JavaScript/TypeScript библиотека для валидации HTML-форм с поддержкой
-Constraint Validation API и пользовательских правил.
+**FormGuard** — лёгкая JavaScript/TypeScript библиотека для валидации HTML-форм с поддержкой Constraint Validation API и пользовательских правил.
 
-## Установка
+---
+
+## QuickStart
+
+### Установка
 
 ```bash
 npm install form-guard
 ````
 
-## Инициализация
+### Подключение
 
 ```ts
 import FormGuard from 'form-guard';
 
 const form = document.querySelector('form')!;
 const validator = new FormGuard(form, {
-  suppressWarnings: false, // опция для подавления предупреждений
+  suppressWarnings: false, // подавление предупреждений
 });
 ```
 
-## Добавление полей
+### Добавление полей
 
 ```ts
 validator.addField('username', [
@@ -38,20 +43,11 @@ validator.addField('skills', [
 ]);
 ```
 
-### Поддерживаемые правила
-
-* `required` — поле обязательно
-* `minLength` — минимальная длина текста
-* `maxLength` — максимальная длина текста
-* `email` — проверка корректности email
-
-> Для checkbox-групп правило `required` проверяет, что выбран хотя бы один элемент.
-
 ---
 
-## HTML структура
+## Пример HTML формы
 
-**Одиночные поля:**
+### Одиночные поля
 
 ```html
 <div class="field">
@@ -61,7 +57,7 @@ validator.addField('skills', [
 </div>
 ```
 
-**Checkbox-группы:**
+### Checkbox-группы
 
 ```html
 <div class="field">
@@ -87,7 +83,23 @@ form.addEventListener('submit', (e) => {
 });
 ```
 
-`validate()` возвращает `true`, если все поля валидны, иначе `false`.
+* Метод `validate()` возвращает `true`, если все поля валидны, иначе `false`.
+
+---
+
+## Поддерживаемые правила
+
+| Правило      | Описание                                                                        |
+| ------------ | ------------------------------------------------------------------------------- |
+| `required`   | Поле обязательно. Для checkbox-групп проверяет, что выбран хотя бы один элемент |
+| `minLength`  | Минимальная длина текста                                                        |
+| `maxLength`  | Максимальная длина текста                                                       |
+| `email`      | Проверка корректности email                                                     |
+| `pattern`    | Проверка соответствия регулярному выражению                                     |
+| `match`      | Значение поля должно совпадать с другим полем формы                             |
+| `min`        | Минимальное числовое значение                                                   |
+| `max`        | Максимальное числовое значение                                                  |
+| `minChecked` | Минимальное количество выбранных элементов в checkbox-группе                    |
 
 ---
 
@@ -97,33 +109,47 @@ form.addEventListener('submit', (e) => {
 * Поддерживает HTML атрибуты (`required`, `minlength`, `type="email"`)
 * Поддерживает пользовательские JS-правила с собственными сообщениями
 * Проверяет согласованность HTML-атрибутов и JS-правил
-* Поддерживает подавление предупреждений через опцию `suppressWarnings`
+* Поддерживает подавление предупреждений через `suppressWarnings`
 * Работает с одиночными полями и группами чекбоксов
 
 ---
 
-## Структура проекта
+## API Reference
 
-```
-src/
-├── core/
-│   ├── Validator.ts
-│   ├── Field.ts
-│   └── rules.ts
-├── types/
-│   ├── validator.ts
-│   ├── field.ts
-│   ├── form.ts
-│   └── validity.ts
-├── main.ts
-```
+### `FormGuard(form: HTMLFormElement, options?: { suppressWarnings?: boolean; warn?: WarningHandler })`
 
-`dist/` содержит собранные ES-модули для подключения в браузере:
+* `form` — HTML форма для валидации
+* `options.suppressWarnings` — `boolean`, подавление предупреждений (по умолчанию `false`)
+* `options.warn` — функция предупреждения `warn(message: string, el?: Element)`
 
-```html
-<script type="module">
-  import FormGuard from './dist/main.js';
-</script>
+### `addField(name: string, rules: FieldRule[], checkboxes?: HTMLInputElement[])`
+
+Добавляет поле для валидации:
+
+* `name` — имя поля (`name` атрибут в HTML)
+* `rules` — массив правил валидации (`FieldRule[]`)
+* `checkboxes` — необязательный массив чекбоксов для групп
+
+### `validate(): boolean`
+
+Выполняет валидацию всех добавленных полей формы.
+Возвращает `true`, если все поля валидны, иначе `false`.
+
+---
+
+### Тип `FieldRule`
+
+```ts
+type FieldRule =
+  | { rule: 'required'; message?: string }
+  | { rule: 'minLength'; value: number; message?: string }
+  | { rule: 'maxLength'; value: number; message?: string }
+  | { rule: 'email'; message?: string }
+  | { rule: 'pattern'; value: string; message?: string }
+  | { rule: 'match'; value: string; message?: string }
+  | { rule: 'min'; value: number; message?: string }
+  | { rule: 'minChecked'; value: number; message?: string }
+  | { rule: 'max'; value: number; message?: string };
 ```
 
 ---
@@ -134,3 +160,4 @@ src/
 * Email без `@` — ошибка под полем email
 * Ни один чекбокс не выбран — ошибка под группой чекбоксов
 * Все поля заполнены корректно — форма отправляется или вызывается `alert('Форма успешно прошла валидацию!')`
+

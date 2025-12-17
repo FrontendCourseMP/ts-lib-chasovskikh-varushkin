@@ -7,7 +7,6 @@ describe("Validator", () => {
   let validator: Validator;
 
   beforeEach(() => {
-    // Создаем DOM форму перед каждым тестом
     document.body.innerHTML = `
       <form id="test-form">
         <div class="field">
@@ -25,6 +24,7 @@ describe("Validator", () => {
         </div>
       </form>
     `;
+
     form = document.getElementById("test-form") as HTMLFormElement;
 
     validator = new Validator(form, {
@@ -36,19 +36,32 @@ describe("Validator", () => {
     const usernameInput = form.querySelector<HTMLInputElement>("#username")!;
     const emailInput = form.querySelector<HTMLInputElement>("#email")!;
 
+    validator.addField("username", [
+      { rule: "required", message: "Поле обязательно для заполнения" },
+    ]);
+
+    validator.addField("email", [
+      { rule: "required", message: "Поле обязательно для заполнения" },
+      { rule: "email", message: "Неверный email" },
+    ]);
+
     usernameInput.value = "Иван";
     emailInput.value = "ivan@example.com";
 
-    const valid = validator.validate();
-    expect(valid).toBe(true);
+    const result = validator.validate();
+    expect(result.valid).toBe(true);
   });
 
   it("проверка required", () => {
     const usernameInput = form.querySelector<HTMLInputElement>("#username")!;
+    validator.addField("username", [
+      { rule: "required", message: "Поле обязательно для заполнения" },
+    ]);
+
     usernameInput.value = "";
 
-    const valid = validator.validate();
-    expect(valid).toBe(false);
+    const result = validator.validate();
+    expect(result.valid).toBe(false);
 
     const errorContainer = usernameInput.parentElement!.querySelector(".error")!;
     expect(errorContainer.textContent).toContain("Поле обязательно для заполнения");
@@ -56,32 +69,39 @@ describe("Validator", () => {
 
   it("проверка email", () => {
     const emailInput = form.querySelector<HTMLInputElement>("#email")!;
+    validator.addField("email", [
+      { rule: "required", message: "Поле обязательно для заполнения" },
+      { rule: "email", message: "Неверный email" },
+    ]);
+
     emailInput.value = "неверный-email";
 
-    const valid = validator.validate();
-    expect(valid).toBe(false);
+    const result = validator.validate();
+    expect(result.valid).toBe(false);
 
     const errorContainer = emailInput.parentElement!.querySelector(".error")!;
     expect(errorContainer.textContent).toContain("Неверный email");
   });
 
   it("проверка группы чекбоксов с minChecked", () => {
-    const rules: FieldRule[] = [{ rule: "minChecked", value: 2, message: "Выберите минимум 2 варианта" }];
-    validator.addField("roles", rules);
+    const checkboxes = Array.from(form.querySelectorAll<HTMLInputElement>('input[name="roles"]'));
+    const rules: FieldRule[] = [
+      { rule: "minChecked", value: 2, message: "Выберите минимум 2 варианта" },
+    ];
+
+    validator.addField("roles", rules, checkboxes);
 
     // Отметим только один чекбокс
-    const checkboxes = Array.from(form.querySelectorAll<HTMLInputElement>('input[name="roles"]'));
     checkboxes[0].checked = true;
-
-    const valid = validator.validate();
-    expect(valid).toBe(false);
+    let result = validator.validate();
+    expect(result.valid).toBe(false);
 
     const errorContainer = checkboxes[0].parentElement!.querySelector(".error")!;
     expect(errorContainer.textContent).toContain("Выберите минимум 2 варианта");
 
     // Отметим оба чекбокса
     checkboxes[1].checked = true;
-    const valid2 = validator.validate();
-    expect(valid2).toBe(true);
+    result = validator.validate();
+    expect(result.valid).toBe(true);
   });
 });

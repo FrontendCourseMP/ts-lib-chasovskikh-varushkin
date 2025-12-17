@@ -1,84 +1,50 @@
-import Field from "./field.js";
-import { FieldRule } from "../types/field.js";
-import { ValidatorOptions } from "../types/validator.js";
-import { WarningHandler, defaultWarningHandler } from "./warning.js";
+import Field from './field.js';
+import { FieldRule } from '../types/field.js';
+import { WarningHandler } from './warning.js';
+
+export interface ValidatorOptions {
+  suppressWarnings?: boolean;
+  warn?: WarningHandler;
+}
+
+export interface ValidationResult {
+  valid: boolean;
+  errors: Record<string, string[]>;
+}
 
 export default class Validator {
-  protected form: HTMLFormElement;
-  protected fields = new Map<string, Field>();
-  protected options: ValidatorOptions;
-  protected warn: WarningHandler;
+  private form: HTMLFormElement;
+  private fields: Record<string, Field> = {};
+  private warn: WarningHandler;
 
-  constructor(form: HTMLFormElement, options: ValidatorOptions = {}) {
-    if (!(form instanceof HTMLFormElement)) {
-      throw new Error("FormGuard: form is not HTMLFormElement");
-    }
-
+  constructor(form: HTMLFormElement, options?: ValidatorOptions) {
     this.form = form;
-    this.options = options;
-    this.warn = options.warn ?? defaultWarningHandler;
-
-    this.checkFormStructure();
+    this.warn = options?.warn || (() => {});
   }
 
-  protected checkFormStructure() {
-    const inputs = this.form.querySelectorAll<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >("input, textarea, select");
-
-    inputs.forEach((input) => {
-      const name = input.getAttribute("name");
-
-      if (!name) {
-        this.warn("Input without name attribute", input);
-      }
-
-      const id = input.getAttribute("id");
-      if (id) {
-        const label = this.form.querySelector(`label[for="${id}"]`);
-        if (!label) {
-          this.warn(`Missing label for ${name}`, input);
-        }
-      }
-
-      const errorEl = input.parentElement?.querySelector(".error");
-      if (!errorEl) {
-        this.warn(`Missing error container for ${name}`, input);
-      }
-    });
-  }
-
-  addField(name: string, rules: FieldRule[]) {
-    const elements = Array.from(
-      this.form.querySelectorAll<HTMLInputElement>(`[name="${name}"]`)
-    );
-
-    if (!elements.length) {
-      throw new Error(`Field "${name}" not found`);
+  addField(
+    name: string,
+    rules: FieldRule[],
+    checkboxes?: HTMLInputElement[]
+  ): void {
+    const el = this.form.querySelector<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>(`[name="${name}"]`);
+    if (!el && (!checkboxes || checkboxes.length === 0)) {
+      throw new Error(`Элемент с именем "${name}" не найден`);
     }
-
-    // checkbox group
-    if (elements.length > 1 && elements.every((el) => el.type === "checkbox")) {
-      const checkboxField = new Field(elements[0], rules, elements);
-      checkboxField.checkConsistency(this.warn);
-      this.fields.set(name, checkboxField);
-      return;
-    }
-
-    // single field
-    const singleField = new Field(elements[0], rules);
-    singleField.checkConsistency(this.warn);
-    this.fields.set(name, singleField);
+    this.fields[name] = new Field(el!, rules, checkboxes);
   }
 
-  validate(): boolean {
-    let isValid = true;
+  validate(): ValidationResult {
+    const errors: Record<string, string[]> = {};
 
-    this.fields.forEach((fieldInstance) => {
-      const { valid } = fieldInstance.validate();
-      if (!valid) isValid = false;
+    Object.entries(this.fields).forEach(([name, field]) => {
+      const result = field.validate();
+      if (!result.valid) errors[name] = result.errors;
     });
 
-    return isValid;
+    return {
+      valid: Object.keys(errors).length === 0,
+      errors,
+    };
   }
 }

@@ -52,17 +52,26 @@ export default class Validator {
   }
 
   addField(name: string, rules: FieldRule[]) {
-    const element = this.form.querySelector<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >(`[name="${name}"]`);
+    const elements = Array.from(
+      this.form.querySelectorAll<HTMLInputElement>(`[name="${name}"]`)
+    );
 
-    if (!element) {
+    if (!elements.length) {
       throw new Error(`Field "${name}" not found`);
     }
 
-    const field = new Field(element, rules);
-    this.fields.set(name, field);
+    // checkbox group
+    if (elements.length > 1 && elements.every((el) => el.type === "checkbox")) {
+      const field = new Field(elements[0], rules, elements);
+      field.checkConsistency(this.warn.bind(this));
+      this.fields.set(name, field);
+      return;
+    }
+
+    // single field
+    const field = new Field(elements[0], rules);
     field.checkConsistency(this.warn.bind(this));
+    this.fields.set(name, field);
   }
 
   validate(): boolean {

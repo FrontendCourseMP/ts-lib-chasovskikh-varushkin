@@ -3,14 +3,30 @@ import { FieldRule } from "../types/field";
 
 export default class Field {
   public element: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
+
+  public checkboxes?: HTMLInputElement[];
   public rules: FieldRule[];
 
   constructor(
     element: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement,
-    rules: FieldRule[]
+    rules: FieldRule[],
+    checkboxes?: HTMLInputElement[]
   ) {
     this.element = element;
     this.rules = rules;
+    this.checkboxes = checkboxes;
+  }
+
+  private isCheckboxGroup(): boolean {
+    return !!this.checkboxes;
+  }
+
+  private getValue(): string | string[] {
+    if (this.isCheckboxGroup()) {
+      return this.checkboxes!.filter((el) => el.checked).map((el) => el.value);
+    }
+
+    return this.element.value;
   }
 
   get nativeValidity(): ValidityState {
@@ -19,22 +35,33 @@ export default class Field {
 
   validate() {
     const errors: string[] = [];
+    this.clearErrors();
 
-    // native validation
-    if (!this.element.checkValidity()) {
-      errors.push(this.element.validationMessage);
+    if (this.isCheckboxGroup()) {
+      const value = this.getValue() as string[];
+
+      if (this.rules.some((r) => r.rule === "required") && value.length === 0) {
+        errors.push("Please select at least one option");
+      }
+    } else {
+      if (!this.element.checkValidity()) {
+        errors.push(this.element.validationMessage);
+      }
+
+      const value = this.getValue() as string;
+
+      this.rules.forEach((rule) => {
+        const handler = rulesMap[rule.rule];
+        if (!handler) return;
+
+        const result = handler(value, rule, this.element);
+        if (result) errors.push(result);
+      });
     }
 
-    // custom rules
-    this.rules.forEach((rule) => {
-      const handler = rulesMap[rule.rule];
-      if (!handler) return;
-
-      const result = handler(this.element.value, rule, this.element);
-      if (result) {
-        errors.push(result);
-      }
-    });
+    if (errors.length) {
+      this.showErrors(errors);
+    }
 
     return {
       valid: errors.length === 0,
@@ -63,5 +90,25 @@ export default class Field {
         }
       }
     });
+  }
+
+  private getErrorContainer(): HTMLElement | null {
+    if (this.isCheckboxGroup()) {
+      return this.checkboxes![0].parentElement?.querySelector(".error") || null;
+    }
+
+    return this.element.parentElement?.querySelector(".error") || null;
+  }
+
+  clearErrors() {
+    const container = this.getErrorContainer();
+    if (container) container.textContent = "";
+  }
+
+  showErrors(errors: string[]) {
+    const container = this.getErrorContainer();
+    if (!container) return;
+
+    container.innerHTML = errors.map((err) => `<div>${err}</div>`).join("");
   }
 }

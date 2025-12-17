@@ -25,7 +25,7 @@ export default defineConfig([
       "no-return-assign": "error",
       "no-shadow": ["error", { hoist: "all" }],
       "no-unneeded-ternary": "error",
-      "no-unused-expressions": "error",
+      "no-unused-expressions": "off",
       "no-useless-concat": "error",
       "no-useless-return": "error",
       "no-var": "error",

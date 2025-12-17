@@ -62,6 +62,7 @@ export default class Validator {
 
     const field = new Field(element, rules);
     this.fields.set(name, field);
+    field.checkConsistency(this.warn.bind(this));
   }
 
   validate(): boolean {

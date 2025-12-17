@@ -1,5 +1,5 @@
-import { FieldRule } from '../types/field';
-import { FieldValidity } from '../types/validity';
+import { rulesMap } from "./rules";
+import { FieldRule } from "../types/field";
 
 export default class Field {
   public element: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
@@ -17,7 +17,7 @@ export default class Field {
     return this.element.validity;
   }
 
-  validate(): FieldValidity {
+  validate() {
     const errors: string[] = [];
 
     // native validation
@@ -27,8 +27,12 @@ export default class Field {
 
     // custom rules
     this.rules.forEach((rule) => {
-      if (rule.rule === 'required' && !this.element.value) {
-        errors.push(rule.message || 'Field is required');
+      const handler = rulesMap[rule.rule];
+      if (!handler) return;
+
+      const result = handler(this.element.value, rule, this.element);
+      if (result) {
+        errors.push(result);
       }
     });
 
@@ -36,5 +40,28 @@ export default class Field {
       valid: errors.length === 0,
       errors,
     };
+  }
+
+  checkConsistency(warn: (msg: string, el?: Element) => void) {
+    const el = this.element;
+
+    this.rules.forEach((rule) => {
+      if (rule.rule === "required" && !el.hasAttribute("required")) {
+        warn('JS rule "required" but no HTML required attribute', el);
+      }
+
+      if (rule.rule === "minLength") {
+        const attr = el.getAttribute("minlength");
+        if (attr && Number(attr) !== rule.value) {
+          warn(`minLength mismatch: HTML=${attr}, JS=${rule.value}`, el);
+        }
+      }
+
+      if (rule.rule === "email" && el instanceof HTMLInputElement) {
+        if (el.type !== "email") {
+          warn("JS email rule but input type is not email", el);
+        }
+      }
+    });
   }
 }

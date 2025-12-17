@@ -40,9 +40,10 @@ export default class Field {
     if (this.isCheckboxGroup()) {
       const value = this.getValue() as string[];
 
-      if (this.rules.some((r) => r.rule === "required") && value.length === 0) {
-        errors.push("Выберите хотя бы один навык");
-      }
+      const minRule = this.rules.find((r) => r.rule === 'minChecked');
+    if (minRule && value.length < minRule.value) {
+      errors.push(minRule.message || `Select at least ${minRule.value} options`);
+    }
     } else {
       if (!this.element.checkValidity()) {
         errors.push(this.element.validationMessage);

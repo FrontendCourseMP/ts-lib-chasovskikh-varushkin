@@ -1,11 +1,13 @@
-import Field from "./Field.js";
+import Field from "./field.js";
 import { FieldRule } from "../types/field.js";
 import { ValidatorOptions } from "../types/validator.js";
+import { WarningHandler, defaultWarningHandler } from "./warning.js";
 
 export default class Validator {
   protected form: HTMLFormElement;
   protected fields = new Map<string, Field>();
   protected options: ValidatorOptions;
+  protected warn: WarningHandler;
 
   constructor(form: HTMLFormElement, options: ValidatorOptions = {}) {
     if (!(form instanceof HTMLFormElement)) {
@@ -14,6 +16,7 @@ export default class Validator {
 
     this.form = form;
     this.options = options;
+    this.warn = options.warn ?? defaultWarningHandler;
 
     this.checkFormStructure();
   }
@@ -45,12 +48,6 @@ export default class Validator {
     });
   }
 
-  protected warn(message: string, el?: Element) {
-    if (!this.options.suppressWarnings) {
-      console.warn(`[FormGuard] ${message}`, el);
-    }
-  }
-
   addField(name: string, rules: FieldRule[]) {
     const elements = Array.from(
       this.form.querySelectorAll<HTMLInputElement>(`[name="${name}"]`)
@@ -62,23 +59,23 @@ export default class Validator {
 
     // checkbox group
     if (elements.length > 1 && elements.every((el) => el.type === "checkbox")) {
-      const field = new Field(elements[0], rules, elements);
-      field.checkConsistency(this.warn.bind(this));
-      this.fields.set(name, field);
+      const checkboxField = new Field(elements[0], rules, elements);
+      checkboxField.checkConsistency(this.warn);
+      this.fields.set(name, checkboxField);
       return;
     }
 
     // single field
-    const field = new Field(elements[0], rules);
-    field.checkConsistency(this.warn.bind(this));
-    this.fields.set(name, field);
+    const singleField = new Field(elements[0], rules);
+    singleField.checkConsistency(this.warn);
+    this.fields.set(name, singleField);
   }
 
   validate(): boolean {
     let isValid = true;
 
-    this.fields.forEach((field) => {
-      const { valid } = field.validate();
+    this.fields.forEach((fieldInstance) => {
+      const { valid } = fieldInstance.validate();
       if (!valid) isValid = false;
     });
 

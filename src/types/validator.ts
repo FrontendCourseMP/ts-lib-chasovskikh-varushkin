@@ -1,9 +1,9 @@
-export interface ValidatorOptions {
-  suppressWarnings?: boolean;
-}
+import { WarningHandler } from "../core/warning.js";
 
 export interface ValidatorOptions {
+
   suppressWarnings?: boolean;
+  warn?: WarningHandler;
 }
 
 export interface ValidationResult {
